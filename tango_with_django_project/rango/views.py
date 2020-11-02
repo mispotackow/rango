@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -19,15 +20,20 @@ def index(request):
     context_dict = dict()
     context_dict['boldmessage'] = 'Crunchy, creamy, cookie, candy, cupcake!'
     context_dict['categories'] = category_list
-
     try:
         pages_list = Page.objects.order_by('-views')[:5]
         context_dict['pages'] = pages_list
     except Page.DoesNotExist:
         context_dict['pages'] = None
 
-    # Оформить ответ и отправить его обратно!
-    return render(request, 'rango/index.html', context=context_dict)
+    # Вызвать вспомогательную функцию для обработки файлов cookie
+    visitor_cookie_handler(request)
+    # context_dict['visits'] = request.session['visits']
+
+    # Получите наш объект Response заранее, чтобы мы могли добавить информацию о cookie.
+    response = render(request, 'rango/index.html', context=context_dict)
+    # Вернуть ответ пользователю, обновив все файлы cookie, которые необходимо изменить.
+    return response
 
 
 def about(request):
@@ -36,6 +42,11 @@ def about(request):
     print(request.method)
     # выводит имя пользователя, если никто не вошел в систему, выводит 'AnonymousUser'
     print(request.user)
+
+    # Вызвать вспомогательную функцию для обработки файлов cookie
+    visitor_cookie_handler(request)
+    context_dict['visits'] = request.session['visits']
+
     return render(request, 'rango/about.html', context=context_dict)
 
 
@@ -244,3 +255,34 @@ def user_logout(request):
     logout(request)
     # Верните пользователя на главную страницу.
     return redirect(reverse('rango:index'))
+
+
+def visitor_cookie_handler(request):
+    # Получить количество посещений сайта.
+    # Мы используем функцию COOKIES.get() для получения cookie посещений.
+    # Если cookie существует, возвращаемое значение приводится к целому числу.
+    # Если cookie не существует, то используется значение по умолчанию 1.
+    visits = int(get_server_side_cookie(request, 'visits', '1'))
+
+    last_visit_cookie = get_server_side_cookie(request, 'last_visit', str(datetime.now()))
+    last_visit_time = datetime.strptime(last_visit_cookie[:-7], '%Y-%m-%d %H:%M:%S')
+
+    # Если с момента последнего посещения прошло больше суток ...
+    if (datetime.now() - last_visit_time).days > 0:
+        visits = visits + 1
+        # Обновите cookie последнего посещения теперь, когда мы обновили счетчик
+        request.session['last_visit'] = str(datetime.now())
+    else:
+        # Установить файл cookie последнего посещения
+        request.session['last_visit'] = last_visit_cookie
+
+    # Обновить / установить cookie посещений
+    request.session['visits'] = visits
+
+
+# Вспомогательный метод
+def get_server_side_cookie(request, cookie, default_val=None):
+    val = request.session.get(cookie)
+    if not val:
+        val = default_val
+    return val
