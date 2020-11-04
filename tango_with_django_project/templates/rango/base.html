@@ -28,12 +28,14 @@
             {% if user.is_authenticated %}
             <!-- Показать эти ссылки, когда пользователь вошел в систему -->
             <li><a href="{% url 'rango:restricted' %}">Restricted Page</a></li>
-            <li><a href="{% url 'rango:logout' %}">Logout</a></li>
+            <li><a href="{% url 'auth_logout' %}?next={% url 'rango:index' %}'">Logout</a></li>
             <li><a href="{% url 'rango:add_category' %}">Add a New Category</a></li>
+            <li><a href="{% url 'auth_password_change' %}">Password Change</a></li>
+            <li><a href="{% url 'auth_password_change_done' %}">Change Complete</a></li>
             {% else %}
             <!-- Показывать эти ссылки, когда пользователь не вошел в систему -->
-            <li><a href="{% url 'rango:register' %}">Sign Up</a></li>
-            <li><a href="{% url 'rango:login' %}">Login</a></li>
+            <li><a href="{% url 'registration_register' %}">Sign Up</a></li>
+            <li><a href="{% url 'auth_login' %}">Login</a></li>
             {% endif %}
             <!-- Вне условных операторов всегда показывает -->
             <li><a href="{% url 'rango:about' %}">About</a></li>

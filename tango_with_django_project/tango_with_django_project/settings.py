@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rango',
+    'registration',
 ]
 
 MIDDLEWARE = [
@@ -135,4 +136,14 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
 ]
 
-LOGIN_URL = 'rango:login'
+# Пользователи страницы перенаправляются, если они не вошли в систему.
+LOGIN_URL = 'auth_login'
+
+# Если True, пользователи могут зарегистрироваться.
+REGISTRATION_OPEN = True
+
+# Если True, то пользователь будет автоматически авторизован после регистрации.
+REGISTRATION_AUTO_LOGIN = True
+
+# URL - адрес, на который Django перенаправляет пользователей после входа в систему.
+LOGIN_REDIRECT_URL = 'rango:index'

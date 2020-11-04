@@ -140,106 +140,106 @@ def add_page(request, category_name_slug):
     return render(request, 'rango/add_page.html', context=context_dict)
 
 
-def register(request):
-    # Логическое значение, сообщающее шаблону
-    # об успешной регистрации.
-    # Первоначально установите значение "Ложь". Код меняет значение на
-    # True, когда регистрация успешна.
-    registered = False
-
-    # Если это HTTP POST, нас интересует обработка данных формы.
-    if request.method == 'POST':
-        # Попытка получить информацию из необработанной информации формы.
-        # Обратите внимание, что мы используем как UserForm, так и UserProfileForm.
-        user_form = UserForm(request.POST)
-        profile_form = UserProfileForm(request.POST)
-
-        # Если две формы действительны ...
-        if user_form.is_valid() and profile_form.is_valid():
-            # Сохранение данных формы пользователя в базе данных.
-            user = user_form.save()
-
-            # Теперь хэшируем пароль с помощью метода set_password.
-            # После хеширования мы можем обновить объект пользователя.
-            user.set_password(user.password)
-            user.save()
-
-            # Теперь отсортируйте экземпляр UserProfile.
-            # Поскольку нам нужно установить атрибут пользователя самостоятельно,
-            # мы устанавливаем commit = False. Это задерживает сохранение модели
-            # пока мы не будем готовы избежать проблем с целостностью.
-            profile = profile_form.save(commit=False)
-            profile.user = user
-
-            # Пользователь предоставил изображение профиля?
-            # Если это так, нам нужно получить его из формы ввода и
-            # ввести в модель UserProfile.
-            if 'picture' in request.FILES:
-                profile.picture = request.FILES['picture']
-
-            # Теперь сохраняем экземпляр модели UserProfile.
-            profile.save()
-
-            # Обновите нашу переменную, чтобы указать, что регистрация шаблона
-            # прошла успешно.
-            registered = True
-        else:
-            # Неверная форма или формы - ошибки или что-то еще?
-            # Ошибки - печать в терминал.
-            print(user_form.errors, profile_form.errors)
-    else:
-        # Это не HTTP POST, поэтому мы визуализируем нашу форму с помощью двух экземпляров ModelForm.
-        # Эти формы будут пустыми, готовыми для ввода пользователем.
-        user_form = UserForm()
-        profile_form = UserProfileForm()
-
-    # Визуализировать шаблон в зависимости от контекста.
-    return render(request, 'rango/register.html', context={'user_form': user_form,
-                                                           'profile_form': profile_form,
-                                                           'registered': registered})
-
-
-def user_login(request):
-    # Если запрос представляет собой HTTP POST, попробуйте вытащить соответствующую информацию.
-    if request.method == 'POST':
-        # Соберите имя пользователя и пароль, предоставленные пользователем.
-        # Эта информация получена из формы входа.
-        # Мы используем request.POST.get ('<переменная>') вместо
-        # для request.POST ['<переменная>'], потому что
-        # request.POST.get ('<переменная>') возвращает None, если
-        # значение не существует, а request.POST ['<переменная>']
-        # вызовет исключение KeyError.
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        # Используйте оборудование Django, чтобы проверить, является ли комбинация имени пользователя/пароля
-        # допустимой - объект User возвращается, если это так.
-        user = authenticate(username=username, password=password)
-
-        # Если у нас есть объект User, детали верны.
-        # Если None (способ представления отсутствия значения в Python),
-        # пользователя с соответствующими учетными данными не найдено.
-        if user:
-            # Аккаунт активен? Он может быть отключен
-            if user.is_active:
-                # Если учетная запись действительна и активна, мы можем войти в систему.
-                # Мы отправим пользователя обратно на домашнюю страницу.
-                login(request, user)
-                return redirect(reverse('rango:index'))
-            else:
-                # Использовалась неактивная учетная запись - без входа!
-                return HttpResponse("Your Rango account is disabled.")
-        else:
-            # Были предоставлены неверные данные для входа. Итак, мы не можем авторизовать пользователя.
-            print(f'Invalid login details: {username}, {password}')
-            return HttpResponse("Invalid login details supplied.")
-
-    # Запрос не является HTTP POST, поэтому отобразите форму входа.
-    # Этот сценарий, скорее всего, будет HTTP GET.
-    else:
-        # Нет переменных контекста для передачи в систему шаблонов, поэтому
-        # пустой объект словаря ...
-        return render(request, 'rango/login.html')
+# def register(request):
+#     # Логическое значение, сообщающее шаблону
+#     # об успешной регистрации.
+#     # Первоначально установите значение "Ложь". Код меняет значение на
+#     # True, когда регистрация успешна.
+#     registered = False
+#
+#     # Если это HTTP POST, нас интересует обработка данных формы.
+#     if request.method == 'POST':
+#         # Попытка получить информацию из необработанной информации формы.
+#         # Обратите внимание, что мы используем как UserForm, так и UserProfileForm.
+#         user_form = UserForm(request.POST)
+#         profile_form = UserProfileForm(request.POST)
+#
+#         # Если две формы действительны ...
+#         if user_form.is_valid() and profile_form.is_valid():
+#             # Сохранение данных формы пользователя в базе данных.
+#             user = user_form.save()
+#
+#             # Теперь хэшируем пароль с помощью метода set_password.
+#             # После хеширования мы можем обновить объект пользователя.
+#             user.set_password(user.password)
+#             user.save()
+#
+#             # Теперь отсортируйте экземпляр UserProfile.
+#             # Поскольку нам нужно установить атрибут пользователя самостоятельно,
+#             # мы устанавливаем commit = False. Это задерживает сохранение модели
+#             # пока мы не будем готовы избежать проблем с целостностью.
+#             profile = profile_form.save(commit=False)
+#             profile.user = user
+#
+#             # Пользователь предоставил изображение профиля?
+#             # Если это так, нам нужно получить его из формы ввода и
+#             # ввести в модель UserProfile.
+#             if 'picture' in request.FILES:
+#                 profile.picture = request.FILES['picture']
+#
+#             # Теперь сохраняем экземпляр модели UserProfile.
+#             profile.save()
+#
+#             # Обновите нашу переменную, чтобы указать, что регистрация шаблона
+#             # прошла успешно.
+#             registered = True
+#         else:
+#             # Неверная форма или формы - ошибки или что-то еще?
+#             # Ошибки - печать в терминал.
+#             print(user_form.errors, profile_form.errors)
+#     else:
+#         # Это не HTTP POST, поэтому мы визуализируем нашу форму с помощью двух экземпляров ModelForm.
+#         # Эти формы будут пустыми, готовыми для ввода пользователем.
+#         user_form = UserForm()
+#         profile_form = UserProfileForm()
+#
+#     # Визуализировать шаблон в зависимости от контекста.
+#     return render(request, 'rango/register.html', context={'user_form': user_form,
+#                                                            'profile_form': profile_form,
+#                                                            'registered': registered})
+#
+#
+# def user_login(request):
+#     # Если запрос представляет собой HTTP POST, попробуйте вытащить соответствующую информацию.
+#     if request.method == 'POST':
+#         # Соберите имя пользователя и пароль, предоставленные пользователем.
+#         # Эта информация получена из формы входа.
+#         # Мы используем request.POST.get ('<переменная>') вместо
+#         # для request.POST ['<переменная>'], потому что
+#         # request.POST.get ('<переменная>') возвращает None, если
+#         # значение не существует, а request.POST ['<переменная>']
+#         # вызовет исключение KeyError.
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
+#
+#         # Используйте оборудование Django, чтобы проверить, является ли комбинация имени пользователя/пароля
+#         # допустимой - объект User возвращается, если это так.
+#         user = authenticate(username=username, password=password)
+#
+#         # Если у нас есть объект User, детали верны.
+#         # Если None (способ представления отсутствия значения в Python),
+#         # пользователя с соответствующими учетными данными не найдено.
+#         if user:
+#             # Аккаунт активен? Он может быть отключен
+#             if user.is_active:
+#                 # Если учетная запись действительна и активна, мы можем войти в систему.
+#                 # Мы отправим пользователя обратно на домашнюю страницу.
+#                 login(request, user)
+#                 return redirect(reverse('rango:index'))
+#             else:
+#                 # Использовалась неактивная учетная запись - без входа!
+#                 return HttpResponse("Your Rango account is disabled.")
+#         else:
+#             # Были предоставлены неверные данные для входа. Итак, мы не можем авторизовать пользователя.
+#             print(f'Invalid login details: {username}, {password}')
+#             return HttpResponse("Invalid login details supplied.")
+#
+#     # Запрос не является HTTP POST, поэтому отобразите форму входа.
+#     # Этот сценарий, скорее всего, будет HTTP GET.
+#     else:
+#         # Нет переменных контекста для передачи в систему шаблонов, поэтому
+#         # пустой объект словаря ...
+#         return render(request, 'rango/login.html')
 
 
 @login_required
@@ -249,12 +249,12 @@ def restricted(request):
 
 # Используйте декоратор login_required (), чтобы гарантировать
 # доступ к представлению только зарегистрированным пользователям.
-@login_required
-def user_logout(request):
-    # Поскольку мы знаем, что пользователь вошел в систему, теперь мы можем просто выйти из системы.
-    logout(request)
-    # Верните пользователя на главную страницу.
-    return redirect(reverse('rango:index'))
+# @login_required
+# def user_logout(request):
+#     # Поскольку мы знаем, что пользователь вошел в систему, теперь мы можем просто выйти из системы.
+#     logout(request)
+#     # Верните пользователя на главную страницу.
+#     return redirect(reverse('rango:index'))
 
 
 def visitor_cookie_handler(request):
