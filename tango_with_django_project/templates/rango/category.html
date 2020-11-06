@@ -10,8 +10,10 @@
 {% endblock %}
 
 {% block body_block %}
+<div class="jumbotron p-4">
+    <div class="container">
     {% if category %}
-        <h1>{{ category.name }}</h1>
+        <h1 class="jumbotron-heading">{{ category.name }}</h1>
         {% if pages %}
         <ul>
             {% for page in pages %}
@@ -26,9 +28,10 @@
         <a href="{% url 'rango:add_page' category.slug %}">Add Page</a> <br />
         {% else %}
         Что-бы добавить категорию вам необходимо войти:
-        <li><a href="{% url 'rango:login' %}">Login</a></li>
+        <li><a href="{% url 'auth_login' %}">Login</a></li>
         {% endif %}
-
+    </div>
+</div>
     {% else %}
     The specified category does not exist.
     {% endif %}
