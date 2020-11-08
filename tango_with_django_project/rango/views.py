@@ -1,12 +1,15 @@
 from datetime import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.views import View
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 
 from rango.bing_search import run_query
-from rango.models import Category, Page
+from rango.models import Category, Page, UserProfile
 from rango.forms import CategoryForm, PageForm, UserForm, UserProfileForm
 
 
@@ -37,18 +40,28 @@ def index(request):
     return response
 
 
-def about(request):
-    context_dict = {'my_name': 'MisPot'}
-    # выводит, является ли метод GET или POST
-    print(request.method)
-    # выводит имя пользователя, если никто не вошел в систему, выводит 'AnonymousUser'
-    print(request.user)
+class AboutView(View):
+    def get(self, request):
+        context_dict = {}
 
-    # Вызвать вспомогательную функцию для обработки файлов cookie
-    visitor_cookie_handler(request)
-    context_dict['visits'] = request.session['visits']
+        visitor_cookie_handler(request)
+        context_dict['visits'] = request.session['visits']
 
-    return render(request, 'rango/about.html', context=context_dict)
+        return render(request, 'rango/about.html', context_dict)
+
+
+# def about(request):
+#     context_dict = {'my_name': 'MisPot'}
+#     # выводит, является ли метод GET или POST
+#     print(request.method)
+#     # выводит имя пользователя, если никто не вошел в систему, выводит 'AnonymousUser'
+#     print(request.user)
+#
+#     # Вызвать вспомогательную функцию для обработки файлов cookie
+#     visitor_cookie_handler(request)
+#     context_dict['visits'] = request.session['visits']
+#
+#     return render(request, 'rango/about.html', context=context_dict)
 
 
 def show_category(request, category_name_slug):
@@ -64,7 +77,7 @@ def show_category(request, category_name_slug):
 
         # Получить все связанные страницы.
         # Filter () вернет список объектов страницы или пустой список.
-        pages = Page.objects.filter(category=category)
+        pages = Page.objects.filter(category=category).order_by('-views')
 
         # Добавляет наш список результатов в контекст шаблона под страницами имен.
         context_dict['pages'] = pages
@@ -79,33 +92,58 @@ def show_category(request, category_name_slug):
         context_dict['category'] = None
         context_dict['pages'] = None
 
+    if request.method == 'POST':
+        if request.method == 'POST':
+            query = request.POST['query'].strip()
+            if query:
+                context_dict['result_list'] = run_query(query)
+                context_dict['query'] = query
+
     # Выполните рендеринг ответа и верните его клиенту.
     return render(request, 'rango/category.html', context=context_dict)
 
 
-@login_required
-def add_category(request):
-    form = CategoryForm()
+class AddCategoryView(View):
+    @method_decorator(login_required)
+    def get(self, request):
+        form = CategoryForm()
+        return render(request, 'rango/add_category.html', {'form': form})
 
-    # HTTP POST?
-    if request.method == 'POST':
+    @method_decorator(login_required)
+    def post(self, request):
         form = CategoryForm(request.POST)
 
-        # Нам предоставили действующую форму?
         if form.is_valid():
-            # Сохраните новую категорию в базе данных.
             form.save(commit=True)
-            # Теперь, когда категория сохранена, мы можем это подтвердить.
-            # На данный момент просто перенаправьте пользователя обратно в представление индекса.
             return redirect(reverse('rango:index'))
         else:
-            # Предоставленная форма содержала ошибки -
-            # просто распечатайте их в терминал.
             print(form.errors)
+        return render(request, 'rango/add_category.html', {'form': form})
 
-    # Будет обрабатывать случаи неправильной формы, новой формы или отсутствия формы.
-    # Визуализировать форму с сообщениями об ошибках (если есть).
-    return render(request, 'rango/add_category.html', {'form': form})
+
+# @login_required
+# def add_category(request):
+#     form = CategoryForm()
+#
+#     # HTTP POST?
+#     if request.method == 'POST':
+#         form = CategoryForm(request.POST)
+#
+#         # Нам предоставили действующую форму?
+#         if form.is_valid():
+#             # Сохраните новую категорию в базе данных.
+#             form.save(commit=True)
+#             # Теперь, когда категория сохранена, мы можем это подтвердить.
+#             # На данный момент просто перенаправьте пользователя обратно в представление индекса.
+#             return redirect(reverse('rango:index'))
+#         else:
+#             # Предоставленная форма содержала ошибки -
+#             # просто распечатайте их в терминал.
+#             print(form.errors)
+#
+#     # Будет обрабатывать случаи неправильной формы, новой формы или отсутствия формы.
+#     # Визуализировать форму с сообщениями об ошибках (если есть).
+#     return render(request, 'rango/add_category.html', {'form': form})
 
 
 @login_required
@@ -289,12 +327,101 @@ def get_server_side_cookie(request, cookie, default_val=None):
     return val
 
 
-def search(request):
-    result_list = []
+# def search(request):
+#     result_list = []
+#     if request.method == 'POST':
+#         query = request.POST['query'].strip()
+#         if query:
+#             # Запустите нашу функцию Bing, чтобы получить список результатов!
+#             result_list = run_query(query)
+#     return render(request, 'rango/search.html', {'result_list': result_list})
 
-    if request.method == 'POST':
-        query = request.POST['query'].strip()
-        if query:
-            # Запустите нашу функцию Bing, чтобы получить список результатов!
-            result_list = run_query(query)
-    return render(request, 'rango/search.html', {'result_list': result_list})
+
+def goto_url(request):
+    if request.method == 'GET':
+        page_id = request.GET.get('page_id')
+
+        try:
+            selected_page = Page.objects.get(id=page_id)
+        except Page.DoesNotExist:
+            return redirect(reverse('rango:index'))
+
+        selected_page.views = selected_page.views + 1
+        selected_page.save()
+
+        return redirect(selected_page.url)
+    return redirect(reverse('rango:index'))
+
+
+@login_required
+def register_profile(request):
+    form = UserProfileForm()
+
+    if request.method == "POST":
+        form = UserProfileForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            user_profile = form.save(commit=False)
+            user_profile.user = request.user
+            user_profile.save()
+
+            return redirect(reverse('rango:index'))
+        else:
+            print(form.errors)
+
+    context_dict = {'form': form}
+    return render(request, 'rango/profile_registration.html', context_dict)
+
+
+class ProfileView(View):
+    def get_user_details(self, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
+        user_profile = UserProfile.objects.get_or_create(user=user)[0]
+        form = UserProfileForm({'website': user_profile.website,
+                                'picture': user_profile.picture})
+
+        return(user, user_profile, form)
+
+    @method_decorator(login_required)
+    def get(self, request, username):
+        try:
+            (user, user_profile, form) = self.get_user_details(username)
+        except TypeError:
+            return redirect(reverse('rango:index'))
+
+        contex_dict = {'user_profile': user_profile,
+                       'selected_user': user,
+                       'form': form}
+
+        return render(request, 'rango/profile.html', contex_dict)
+
+    @method_decorator(login_required)
+    def post(self, requeset, username):
+        try:
+            (user, user_profile, form) = self.get_user_details(username)
+        except TypeError:
+            return redirect(reverse('rango:index'))
+
+        form = UserProfileForm(requeset.POST, requeset.FILES, instance=user_profile)
+        if form.is_valid():
+            form.save(commit=True)
+            return redirect('rango:profile', user.username)
+        else:
+            print(form.errors)
+
+        context_dict = {'user_profile': user_profile,
+                        'selected_user': user,
+                        'form': form}
+        return render(requeset, 'rango/profile.html', context_dict)
+
+
+class ListProfilesView(View):
+    @method_decorator(login_required)
+    def get(self, request):
+        profiles = UserProfile.objects.all()
+
+        return render(request, 'rango/list_profiles.html', {'user_profile_list': profiles})
