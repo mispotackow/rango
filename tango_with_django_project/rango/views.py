@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.utils import timezone
 from django.views import View
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -27,6 +28,7 @@ class IndexView(View):
         context_dict['boldmessage'] = 'Crunchy, creamy, cookie, candy, cupcake!'
         context_dict['categories'] = category_list
         context_dict['pages'] = page_list
+
         # context_dict['visits'] = request.session['visits']
 
         # Вызвать вспомогательную функцию для обработки файлов cookie
@@ -183,6 +185,7 @@ class GotoView(View):
             return redirect(reverse('rango:index'))
 
         selected_page.views = selected_page.views + 1
+        selected_page.last_visit = timezone.now()
         selected_page.save()
 
         return redirect(selected_page.url)
