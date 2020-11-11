@@ -27,7 +27,7 @@ SECRET_KEY = ')sf^m9#-d@hijj3y@v21qhmx1#932$1$od4-(yc#vms8w$+x9&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['mispotcd .pythonanywhere.com']
 
 
 # Application definition
